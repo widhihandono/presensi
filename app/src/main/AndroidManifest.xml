@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.presensi.app">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera2.full"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.front"
+        android:required="false" />
+
+    <application
+        android:allowBackup="true"
+        android:hardwareAccelerated="true"
+        android:icon="@drawable/logo_menu"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:roundIcon="@drawable/logo_menu"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true">
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDgHnK1lSoJ6N-BaMvPvCcIptNju3W9G1I" />
+
+        <activity android:name="com.presensi.app.Bantuan_Activity"
+            android:screenOrientation="portrait"></activity>
+        <activity android:name="com.presensi.app.Presence_Offline_Activity"
+            android:screenOrientation="portrait"/>
+        <activity android:name="com.presensi.app.List_Offline_PresenceActivity" />
+        <activity
+            android:name="com.presensi.app.Reset_password_Activity"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+        <activity
+            android:name="com.presensi.app.Profile_Activity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
+        <service
+            android:name="com.presensi.app.Services.LocationService"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity android:name="com.presensi.app.CameraActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name="com.presensi.app.List_Unit_Kerja_Activity" />
+        <activity android:name="com.presensi.app.List_Location_Activity" />
+        <activity android:name="com.presensi.app.Add_Location_Activity" />
+        <activity android:name="com.presensi.app.Camera_New_Activity" />
+        <activity android:name="com.presensi.app.Camera_Activity" />
+        <activity android:name="com.presensi.app.Location_Activity" /> <!-- MAPS -->
+
+
+        <activity android:name="com.presensi.app.History_Presensi_Activity" />
+
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        <provider
+            android:name="com.presensi.app.Util.PhotoProvider"
+            android:authorities="com.presensi.app.Util.PhotoProvider"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
+        <activity android:name="com.presensi.app.Menu_Utama_Activity"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.presensi.app.Presence_Activity"
+            android:screenOrientation="portrait"/>
+        <activity
+            android:name="com.presensi.app.Login_Activity"
+            android:windowSoftInputMode="adjustResize|stateVisible" />
+        <activity android:name="com.presensi.app.MainActivity">
+
+            <!-- <intent-filter> -->
+            <!-- <action android:name="android.intent.action.MAIN" /> -->
+
+
+            <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
+            <!-- </intent-filter> -->
+        </activity>
+    </application>
+
+</manifest>

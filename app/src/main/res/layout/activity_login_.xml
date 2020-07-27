@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Login_Activity"
+    android:id="@+id/sb_login"
+    android:background="@drawable/background_color">
+
+
+
+    <android.support.v4.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginLeft="20dp"
+                android:layout_marginTop="100dp"
+                android:id="@+id/lnWelcome">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Smart Presence"
+                    android:textColor="#fff"
+                    android:textSize="40dp"
+                    android:id="@+id/welcome"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Silahkan login"
+                    android:textColor="#fff"
+                    android:textSize="16dp"/>
+            </LinearLayout>
+
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="20dp"
+                    android:layout_marginLeft="20dp"
+                    android:layout_below="@id/lnWelcome"
+                    android:layout_marginTop="40dp"
+                    android:background="@drawable/text_box"
+                    android:id="@+id/etNip"
+                    android:textColor="#F7F7F7"
+                    android:hint="NIP"
+                    android:textColorHint="#B4E9E7E7"/>
+
+
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="20dp"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginTop="12dp"
+                    android:id="@+id/etPass"
+                    android:hint="PASSWORD"
+                    android:inputType="textPassword"
+                    android:textColor="#F7F7F7"
+                    android:layout_below="@id/etNip"
+                    android:textColorHint="#B4E9E7E7"
+                    android:background="@drawable/text_box"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:background="@drawable/background_btn"
+                android:layout_below="@id/etPass"
+                android:text="L O G I N"
+                android:textColor="#000"
+                android:textSize="19dp"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:id="@+id/tvLogin"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="20dp"
+                android:layout_marginLeft="20dp"
+                android:layout_marginTop="25dp"
+                android:visibility="visible"
+                android:padding="10dp"
+                android:layout_below="@id/tvLogin"
+                android:id="@+id/tvResetPass"
+                android:text="Lupa Password ?"
+                android:textColor="#FFFFFF"
+                android:textSize="18dp"
+                android:background="@drawable/button_background"
+                android:layout_alignParentRight="true"/>
+
+
+        </RelativeLayout>
+    </android.support.v4.widget.NestedScrollView>
+
+
+</RelativeLayout>

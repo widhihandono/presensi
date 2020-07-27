@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".CameraActivity"
+    android:id="@+id/sb_camera_1">
+
+    <io.fotoapparat.facedetector.view.CameraOverlayLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <io.fotoapparat.view.CameraView
+            android:id="@+id/camera_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            tools:visibility="visible"/>
+
+        <io.fotoapparat.facedetector.view.RectanglesView
+            android:id="@+id/rectanglesView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:rectanglesColor="@color/colorAccent"
+            app:rectanglesStrokeWidth="2dp"/>
+
+    </io.fotoapparat.facedetector.view.CameraOverlayLayout>
+
+    <TextView
+        android:id="@+id/no_permission"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="50dp"
+        android:text="No Camera permission granted."
+        android:textSize="20sp"
+        android:visibility="gone"
+        tools:visibility="visible"/>
+
+<!--    <Button-->
+<!--        android:id="@+id/switchCamera"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_gravity="top|right"-->
+<!--        android:layout_margin="8dp"-->
+<!--        android:text="Switch camera"/>-->
+
+<!--    <Button-->
+<!--        android:id="@+id/btnTakePicture"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_gravity="bottom|right"-->
+<!--        android:layout_marginBottom="80dp"-->
+<!--        android:visibility="visible"-->
+<!--        android:text="Take Picture"/>-->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="bottom">
+
+        <!--<Switch-->
+        <!--android:id="@+id/startstoppreview"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:background="@drawable/background_menu"-->
+        <!--android:text="Ganti Camera" />-->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/camBack"
+                android:textSize="13dp"
+                android:visibility="gone"
+                android:background="@drawable/background_menu"
+                android:text="Kamera Belakang"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/camDepan"
+                android:textSize="13dp"
+                android:visibility="gone"
+                android:background="@drawable/background_menu"
+                android:layout_marginLeft="20dp"
+                android:text="Kamera Depan"/>
+        </LinearLayout>
+        <Button
+            android:id="@+id/getpicture"
+            android:layout_width="match_parent"
+            android:background="@drawable/background_btn_blue"
+            android:textColor="#ffff"
+            android:visibility="gone"
+            android:layout_height="wrap_content"
+            android:text="Ambil Foto" />
+    </LinearLayout>
+
+</FrameLayout>

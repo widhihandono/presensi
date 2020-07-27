@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Presence_Activity"
+    android:id="@+id/snackbar"
+    android:background="@drawable/background_color">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        android:id="@+id/lnMaps"
+        android:orientation="horizontal">
+        <org.osmdroid.views.MapView
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="true"/>
+    </LinearLayout>
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/background_btn_abu2"
+        android:src="@drawable/ic_back"
+        android:layout_marginLeft="15dp"
+        android:layout_marginTop="15dp"
+        android:id="@+id/btnBack"/>
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/background_btn_abu2"
+        android:src="@drawable/ic_refresh"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="15dp"
+        android:id="@+id/btnRefresh"
+        android:layout_alignParentRight="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/background_btn_white"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="15dp"
+        android:text="Load Maps"
+        android:paddingBottom="5dp"
+        android:paddingTop="5dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:id="@+id/tvLoadMaps"
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/btnRefresh"/>
+
+    <android.support.v4.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/lnMaps">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:layout_marginTop="15dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_marginBottom="8dp"
+                    android:textSize="17dp"
+                    android:visibility="gone"
+                    android:textColor="#fff"
+                    android:id="@+id/tvCoordinat"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="left"
+                    android:layout_gravity="left"
+                    android:layout_marginBottom="4dp"
+                    android:layout_marginLeft="10dp"
+                    android:textSize="16dp"
+                    android:visibility="gone"
+                    android:textColor="#fff"
+                    android:id="@+id/tvAkurasi"/>
+
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:layout_marginTop="15dp"
+                    android:textSize="18dp"
+                    android:textColor="#fff"
+                    android:id="@+id/tvWaktu"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Presensi"
+                    android:gravity="center"
+                    android:layout_marginTop="15dp"
+                    android:textSize="20dp"
+                    android:textColor="#ffff"
+                    android:id="@+id/tvPresensi"
+                    android:background="@drawable/background_btn_2"/>
+
+            </LinearLayout>
+        </RelativeLayout>
+    </android.support.v4.widget.NestedScrollView>
+</RelativeLayout>

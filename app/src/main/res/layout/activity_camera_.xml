@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/sb_camera"
+    tools:context=".Camera_Activity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:id="@+id/cPreview">
+
+
+    </LinearLayout>
+
+
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:gravity="bottom|center"-->
+        <!--android:id="@+id/btn"-->
+        <!--android:orientation="horizontal">-->
+
+        <!--<Button-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:id="@+id/btnCam"-->
+            <!--android:textSize="15sp"-->
+            <!--android:text="Take Photo"/>-->
+
+        <!--<Button-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:id="@+id/btnSwitch"-->
+            <!--android:layout_marginLeft="0dp"-->
+            <!--android:textSize="15sp"-->
+            <!--android:text="Switch Camera"/>-->
+
+    <!--</LinearLayout>-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/camBack"
+                android:background="@drawable/background_menu"
+                android:text="Belakang"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/camDepan"
+                android:background="@drawable/background_menu"
+                android:layout_marginLeft="20dp"
+                android:text="Depan"/>
+        </LinearLayout>
+        <Button
+            android:id="@+id/getpicture"
+            android:layout_width="match_parent"
+            android:background="@drawable/background_btn_blue"
+            android:textColor="#ffff"
+            android:layout_height="wrap_content"
+            android:text="Ambil Foto" />
+
+    </LinearLayout>
+
+</RelativeLayout>
