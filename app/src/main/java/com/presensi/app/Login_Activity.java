@@ -5,10 +5,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
@@ -24,6 +24,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.presensi.app.Api.Api_Client;
 import com.presensi.app.Api.Api_Interface;
 import com.presensi.app.Model.Ent_Settingan_Emulator;
@@ -268,7 +269,7 @@ public class Login_Activity extends AppCompatActivity {
     {
         tvLogin.setEnabled(false);
         bar = Snackbar.make(findViewById(R.id.sb_login),"Authentification...", Snackbar.LENGTH_INDEFINITE);
-        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(android.support.design.R.id.snackbar_text).getParent();
+        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(com.google.android.material.R.id.snackbar_text).getParent();
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) contentLay.getLayoutParams();
         layoutParams.gravity = Gravity.CENTER;
         contentLay.setLayoutParams(layoutParams);

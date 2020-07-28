@@ -21,12 +21,12 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -61,6 +61,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.snackbar.Snackbar;
 import com.presensi.app.Api.Api_Client;
 import com.presensi.app.Api.Api_Interface;
 import com.presensi.app.Model.Ent_Presensi;
@@ -878,7 +879,7 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
     private void snackbarDialog() {
         tvPresensi.setEnabled(false);
         bar = Snackbar.make(findViewById(R.id.snackbar), "Please Wait...Send Data", Snackbar.LENGTH_INDEFINITE);
-        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(android.support.design.R.id.snackbar_text).getParent();
+        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(com.google.android.material.R.id.snackbar_text).getParent();
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) contentLay.getLayoutParams();
         layoutParams.gravity = Gravity.TOP;
         contentLay.setLayoutParams(layoutParams);
@@ -893,7 +894,7 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
     private void snackbarDialogLocation() {
         tvPresensi.setEnabled(false);
         bar = Snackbar.make(findViewById(R.id.snackbar), "Sedang Mencari Lokasi Presensi, Mohon Tunggu...", Snackbar.LENGTH_INDEFINITE);
-        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(android.support.design.R.id.snackbar_text).getParent();
+        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(com.google.android.material.R.id.snackbar_text).getParent();
         contentLay.setBackgroundResource(R.color.colorPrimary);
         ProgressBar item = new ProgressBar(this);
         contentLay.addView(item);

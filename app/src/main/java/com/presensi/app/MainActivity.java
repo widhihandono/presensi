@@ -8,9 +8,10 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Handler;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.text.format.DateUtils;
@@ -101,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                 .setShowWhen(true)
                 .setContentTitle("ABC")
                 .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE | Notification.DEFAULT_SOUND)
                 .setSmallIcon(R.drawable.logo_menu)
                 .setUsesChronometer(true)

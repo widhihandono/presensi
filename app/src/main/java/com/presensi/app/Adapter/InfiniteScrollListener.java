@@ -1,7 +1,8 @@
 package com.presensi.app.Adapter;
 
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class InfiniteScrollListener extends RecyclerView.OnScrollListener {
     private final static int VISIBLE_THRESHOLD = 2;

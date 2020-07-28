@@ -12,9 +12,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.presensi.app.Api.Api_Client;
 import com.presensi.app.Api.Api_Interface;
 import com.presensi.app.Model.Ent_lokasi_presence;
@@ -255,7 +256,7 @@ public class CameraActivity extends AppCompatActivity {
     {
 
         bar = Snackbar.make(findViewById(R.id.sb_camera_1),text, Snackbar.LENGTH_INDEFINITE);
-        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(android.support.design.R.id.snackbar_text).getParent();
+        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(com.google.android.material.R.id.snackbar_text).getParent();
         contentLay.setBackgroundResource(R.color.colorPrimary);
         ProgressBar item = new ProgressBar(this);
         contentLay.addView(item);

@@ -21,11 +21,10 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.support.annotation.RequiresApi;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
@@ -50,6 +49,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.presensi.app.Util.CameraControllerV2WithPreview;
 import com.presensi.app.Util.CameraControllerV2WithPreview_depan;
 import com.presensi.app.Util.PhotoProvider;
@@ -517,7 +517,7 @@ public class Camera_New_Activity extends AppCompatActivity implements ActivityCo
     private void snackbarDialog(String text)
     {
         bar = Snackbar.make(findViewById(R.id.snackbar_camera),text, Snackbar.LENGTH_INDEFINITE);
-        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(android.support.design.R.id.snackbar_text).getParent();
+        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(com.google.android.material.R.id.snackbar_text).getParent();
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) contentLay.getLayoutParams();
         layoutParams.gravity = Gravity.CENTER;
         contentLay.setLayoutParams(layoutParams);

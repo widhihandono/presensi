@@ -82,7 +82,7 @@
     <!--android:layout_marginLeft="5dp">-->
 
     <!--</android.support.v7.widget.RecyclerView>-->
-<android.support.v4.widget.NestedScrollView
+<androidx.core.widget.NestedScrollView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_below="@id/lnParameter">
@@ -94,7 +94,7 @@
 
         android:orientation="vertical">
     </TableLayout>
-</android.support.v4.widget.NestedScrollView>
+</androidx.core.widget.NestedScrollView>
 
 
 </RelativeLayout>

@@ -2,12 +2,7 @@ package com.presensi.app;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -19,6 +14,12 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.snackbar.Snackbar;
 import com.presensi.app.Adapter.LocationPresence_Adapter;
 import com.presensi.app.Adapter.New_UnitKerja_location_Adapter;
 import com.presensi.app.Api.Api_Client;
@@ -144,7 +145,7 @@ private New_UnitKerja_location_Adapter unitKerja_adapter;
 
     private void snackbarDialog() {
         bar = Snackbar.make(findViewById(R.id.sb_list_location), "Please Wait...get Data", Snackbar.LENGTH_INDEFINITE);
-        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(android.support.design.R.id.snackbar_text).getParent();
+        ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(com.google.android.material.R.id.snackbar_text).getParent();
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) contentLay.getLayoutParams();
         layoutParams.gravity = Gravity.TOP;
         contentLay.setLayoutParams(layoutParams);

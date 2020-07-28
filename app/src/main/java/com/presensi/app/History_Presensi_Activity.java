@@ -1,14 +1,16 @@
 package com.presensi.app;
 
 import android.net.Uri;
-import android.support.design.widget.TabLayout;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager.widget.ViewPager;
+
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
 
+import com.google.android.material.tabs.TabLayout;
 import com.presensi.app.Adapter.Presensi_Adapter;
 import com.presensi.app.Adapter.TabPager_Adapter;
 import com.presensi.app.Api.Api_Client;
@@ -42,7 +44,7 @@ private SharedPref sharedPref;
         ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
         TabPager_Adapter myPagerAdapter = new TabPager_Adapter(getSupportFragmentManager());
         viewPager.setAdapter(myPagerAdapter);
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tablayout);
+        TabLayout tabLayout = findViewById(R.id.tablayout);
         tabLayout.setupWithViewPager(viewPager);
 
 

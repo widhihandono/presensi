@@ -10,10 +10,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -344,7 +345,7 @@ public class Offline_Presence_Adapter extends RecyclerView.Adapter<Offline_Prese
 
             // Init and show dialog
             this.progressDialog = new ProgressDialog(this.context);
-            if(this.progressDialog != null)
+            if(this.progressDialog == null)
             {
                 this.progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                 this.progressDialog.setCancelable(false);
