@@ -1,15 +1,31 @@
 package com.presensi.app;
 
+import android.Manifest;
+import android.app.AppOpsManager;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Criteria;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Build;
+
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import android.os.Bundle;
+import android.provider.Settings;
+import android.telephony.TelephonyManager;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Gravity;
@@ -24,6 +40,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.snackbar.Snackbar;
 import com.presensi.app.Api.Api_Client;
 import com.presensi.app.Api.Api_Interface;
@@ -32,15 +51,20 @@ import com.presensi.app.Model.Ent_lokasi_presence;
 import com.presensi.app.Model.Ent_pegawai;
 import com.presensi.app.SQLite.Crud;
 import com.presensi.app.Util.SharedPref;
+import com.scottyab.rootbeer.RootBeer;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 
-public class Login_Activity extends AppCompatActivity {
+public class Login_Activity extends AppCompatActivity implements LocationListener {
     private TextView tvLogin, tvResetPass;
     EditText etNip, etPass;
     private Api_Interface api_interface;
@@ -49,12 +73,22 @@ public class Login_Activity extends AppCompatActivity {
     private boolean dialogSet = false;
     private Snackbar bar;
 
+    LocationManager locationManager;
+    Geocoder geocoder;
+    Location location;
+    String status = "", latitude = "0", longitude = "0", encode = "", ket_presence = "Imei sudah digunakan oleh : ";
+
 
     //SQLITE
     Crud crudSQlite;
 
     //SET EMULATOR
-    String bootloader,host,id;
+    String bootloader, host, id;
+
+    String[] perms = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CALL_PHONE,
+            Manifest.permission.CAMERA, Manifest.permission.READ_PHONE_STATE};
+    int permsRequestCode = 200;
 
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -64,6 +98,10 @@ public class Login_Activity extends AppCompatActivity {
         setContentView(R.layout.activity_login_);
 
         getSupportActionBar().hide();
+
+        geocoder = new Geocoder(this, Locale.getDefault());
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
 
         crudSQlite = new Crud(this);
 
@@ -83,14 +121,95 @@ public class Login_Activity extends AppCompatActivity {
         String fingerprint = Build.FINGERPRINT;
         String hardware = Build.HARDWARE;
 //
-//        tvLogin.setText(bootloader+",,,"+host+",,,"+id+",,,"+board+",,,"+brand+",,,"+fingerprint+",,,"+hardware);
-        cekEmulator(bootloader,host,id);
+        tvLogin.setText("Login");
+
+
+
+        RootBeer rootBeer = new RootBeer(this);
+        if (rootBeer.isRooted()) {
+            showDialogEmulator("Aplikasi tidak bisa digunakan di HP yang sudah di Root dan dilarang menggunakan Emulator !");
+        } else {
+            executeShellCommand("su");
+            cekEmulator(bootloader,host,id);
+        }
+
+
+
 
 //        if (bootloader.equals("uboot") || bootloader.equals("moto") || isEmulator() == true ||
 //                host.equals("se.infra") || host.equals("SWHE7705") || id.equals("LMY48Z"))
 //        {
 //            showDialogEmulator();
 //        }
+
+//======================================= check Location=======================================================================================
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        criteria.setPowerRequirement(Criteria.POWER_HIGH);
+        criteria.setAltitudeRequired(false);
+        criteria.setSpeedRequired(false);
+        criteria.setCostAllowed(true);
+        criteria.setBearingRequired(false);
+
+        FusedLocationProviderClient flpc = LocationServices.getFusedLocationProviderClient(getApplicationContext());
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this, perms, permsRequestCode);
+        } else {
+            locationManager.getBestProvider(criteria,true);
+            locationManager.requestLocationUpdates(1000, 1, criteria, this,null);
+
+            if(locationManager != null) {
+                location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                if (location != null) {
+                    latitude = String.valueOf(location.getLatitude());
+                    longitude = String.valueOf(location.getLongitude());
+//                    Toast.makeText(Login_Activity.this,latitude,Toast.LENGTH_LONG).show();
+                    if (isMockLocationOn(location, this)) {
+                        showDialogEmulator("Anda terdeteksi menggunakan Fake GPS !");
+                    }
+
+
+                } else {
+
+                    flpc.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            if(location != null)
+                            {
+                                latitude = String.valueOf(location.getLatitude());
+                                longitude = String.valueOf(location.getLongitude());
+                                if (isMockLocationOn(location, Login_Activity.this)) {
+                                    showDialogEmulator("Anda terdeteksi menggunakan Fake GPS !");
+                                }
+
+                                //                        Toast.makeText(getApplicationContext(),location.toString(),Toast.LENGTH_SHORT).show();
+                            }
+
+                        }
+                    });
+                }
+
+            }
+        }
+
+
+        if(isMockLocationEnabled())
+        {
+            showDialogEmulator("Fake GPS Detected");
+        }
+
+        //==============================================================================================================================
+
+
+        if(!isTimeAutomatic(this) || !isTimeZoneAutomatic(this))
+        {
+            showDialogEmulator("Terdeteksi merubah jam");
+//                    Toast.makeText(getApplicationContext(),"Time harus Auto",Toast.LENGTH_LONG).show();
+        }
 
 
         tvLogin.setOnClickListener(l -> {
@@ -168,6 +287,107 @@ public class Login_Activity extends AppCompatActivity {
             finish();
         });
 
+
+    }
+
+    private void executeShellCommand(String su) {
+        Process process = null;
+        try {
+            process = Runtime.getRuntime().exec(su);
+            showDialogEmulator("Aplikasi tidak bisa digunakan di HP yang sudah di Root dan dilarang menggunakan Emulator !");
+//            Toast.makeText(Login_Activity.this, "It is rooted device", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+//            showDialogEmulator("No Rooted");
+        } finally {
+            if (process != null) {
+                try {
+                    process.destroy();
+                } catch (Exception e) { }
+            }
+        }
+    }
+
+    public boolean isRooted() {
+
+        // get from build info
+        String buildTags = android.os.Build.TAGS;
+        if (buildTags != null && buildTags.contains("test-keys")) {
+            return true;
+        }
+
+        // check if /system/app/Superuser.apk is present
+        try {
+            File file = new File("/system/app/Superuser.apk");
+            if (file.exists()) {
+                return true;
+            }
+        } catch (Exception e1) {
+            // ignore
+        }
+
+        // try executing commands
+        return canExecuteCommand("/system/xbin/which su")
+                || canExecuteCommand("/system/bin/which su") || canExecuteCommand("which su");
+    }
+
+    // executes a command on the system
+    private static boolean canExecuteCommand(String command) {
+        boolean executedSuccesfully;
+        try {
+            Runtime.getRuntime().exec(command);
+            executedSuccesfully = true;
+        } catch (Exception e) {
+            executedSuccesfully = false;
+        }
+
+        return executedSuccesfully;
+    }
+
+
+    public boolean isMockLocationEnabled() {
+        boolean isMockLocation = false;
+        try {
+            //if marshmallow
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                AppOpsManager opsManager = (AppOpsManager) getApplicationContext().getSystemService(Context.APP_OPS_SERVICE);
+                isMockLocation = (opsManager.checkOp(AppOpsManager.OPSTR_MOCK_LOCATION, android.os.Process.myUid(), BuildConfig.APPLICATION_ID)== AppOpsManager.MODE_ALLOWED);
+            } else {
+                // in marshmallow this will always return true
+                isMockLocation = !android.provider.Settings.Secure.getString(getApplicationContext().getContentResolver(), "mock_location").equals("0");
+            }
+        } catch (Exception e) {
+            return isMockLocation;
+        }
+        return isMockLocation;
+    }
+
+
+
+    public static boolean isMockLocationOn(Location location, Context context) {
+        boolean isMock = false;
+        if (android.os.Build.VERSION.SDK_INT >= 18) {
+            isMock = location.isFromMockProvider();
+        } else {
+            isMock = !Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION).equals("0");
+        }
+        return isMock;
+    }
+
+
+    public static boolean isTimeAutomatic(Context c) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            return Settings.Global.getInt(c.getContentResolver(), Settings.Global.AUTO_TIME, 0) == 1;
+        } else {
+            return android.provider.Settings.System.getInt(c.getContentResolver(), android.provider.Settings.System.AUTO_TIME, 0) == 1;
+        }
+    }
+
+    public static boolean isTimeZoneAutomatic(Context c) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            return Settings.Global.getInt(c.getContentResolver(), Settings.Global.AUTO_TIME_ZONE, 0) == 1;
+        } else {
+            return android.provider.Settings.System.getInt(c.getContentResolver(), Settings.System.AUTO_TIME_ZONE, 0) == 1;
+        }
     }
 
     @Override
@@ -188,6 +408,9 @@ public class Login_Activity extends AppCompatActivity {
 //    {
 //        showDialogEmulator();
 //    }
+
+
+
 
     private void cekEmulator(String boat,String host,String id)
     {
@@ -250,7 +473,7 @@ public class Login_Activity extends AppCompatActivity {
                 .setPositiveButton("Keluar",new DialogInterface.OnClickListener() {
                     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
                     public void onClick(DialogInterface dialog, int id) {
-                       finishAffinity();
+                        finishAffinity();
                     }
                 });
 
@@ -376,7 +599,23 @@ public class Login_Activity extends AppCompatActivity {
     }
 
 
+    @Override
+    public void onLocationChanged(Location location) {
 
+    }
 
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
 
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
+    }
 }

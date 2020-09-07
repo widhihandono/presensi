@@ -6,9 +6,9 @@ android {
     defaultConfig {
         applicationId "com.presensi.app"
         minSdkVersion 16
-        targetSdkVersion 28
-        versionCode 39
-        versionName "3.2"
+        targetSdkVersion 29
+        versionCode 41
+        versionName "3.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -90,5 +90,6 @@ dependencies {
     //OSM
     implementation 'org.osmdroid:osmdroid-android:6.1.7'
 
-    implementation 'com.github.coleflowers:android-emulator-detector-android-studio:1.0.2'
+    //Check Root
+    implementation 'com.scottyab:rootbeer-lib:0.0.8'
 }

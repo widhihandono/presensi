@@ -3,13 +3,21 @@ package com.presensi.app;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.location.Criteria;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -44,12 +52,14 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -61,17 +71,21 @@ import com.presensi.app.Model.Ent_lokasi_presence;
 import com.presensi.app.Model.Ent_pegawai;
 import com.presensi.app.SQLite.Crud;
 import com.presensi.app.Util.SharedPref;
+import com.scottyab.rootbeer.RootBeer;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatCallback, View.OnClickListener {
+public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatCallback, View.OnClickListener, LocationListener {
     private LinearLayout lnPresensiDatang,lnPresensiPulang;
     private TextView tvJam,tvTgl,tvHistory,tvNip,tvNama,
             tvVersion,tvEditProfile,tvUpdateData,tvPresensiOffline,tvHelp;
@@ -93,6 +107,11 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
     String currentPhotoPath;
     Bitmap bitmap;
 
+    LocationManager locationManager;
+    Geocoder geocoder;
+    Location location;
+    String status = "", latitude = "0", longitude = "0", encode = "", ket_presence = "Imei sudah digunakan oleh : ";
+
     String bootloader,host,id;
 
     String[] perms = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -100,6 +119,7 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
             Manifest.permission.CAMERA,Manifest.permission.READ_PHONE_STATE};
 
     int permsRequestCode = 200;
+
     private static final String TAG = "Main_Navigation";
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
 
@@ -123,6 +143,9 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
         api_interface = Api_Client.getClient().create(Api_Interface.class);
         sharedPref = new SharedPref(this);
 
+        geocoder = new Geocoder(this, Locale.getDefault());
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
         lnPresensiDatang = findViewById(R.id.lnPresensiDatang);
         lnPresensiPulang = findViewById(R.id.lnPresensiPulang);
         tvJam = findViewById(R.id.tvJam);
@@ -137,7 +160,7 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
         tvPresensiOffline = findViewById(R.id.tvPresensiOffline);
         tvHelp = findViewById(R.id.tvHelp);
 
-        tvVersion.setText("Version 3.2");
+        tvVersion.setText("Version 3.3");
         fab = (FloatingActionButton)findViewById(R.id.fab);
         fab_add_unit_kerja = (FloatingActionButton)findViewById(R.id.fab_add_unit_kerja);
         fab_list = (FloatingActionButton)findViewById(R.id.fab_list);
@@ -166,15 +189,18 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
             ActivityCompat.requestPermissions(this, perms, permsRequestCode);
         }
 
+
+
         bootloader = Build.BOOTLOADER;
         host = Build.HOST;
         id = Build.ID;
 
-        cekEmulator(bootloader,host,id);
+
+
 
         if (isEmulator() == true)
         {
-            showDialogEmulator();
+            showDialogEmulator("Terdeteksi Menggunakan Emulator !");
         }
         else {
 
@@ -186,9 +212,96 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
             else
             {
 
+                getVersion();
+
+                RootBeer rootBeer = new RootBeer(this);
+                if (rootBeer.isRooted()) {
+                    showDialogEmulator("Aplikasi tidak bisa digunakan di HP yang sudah di Root dan dilarang menggunakan Emulator !");
+                } else {
+                    executeShellCommand("su");
+                    cekEmulator(bootloader,host,id);
+                }
+
+
+                //======================================= check Location=======================================================================================
+                Criteria criteria = new Criteria();
+                criteria.setAccuracy(Criteria.ACCURACY_FINE);
+                criteria.setPowerRequirement(Criteria.POWER_HIGH);
+                criteria.setAltitudeRequired(false);
+                criteria.setSpeedRequired(false);
+                criteria.setCostAllowed(true);
+                criteria.setBearingRequired(false);
+
+                FusedLocationProviderClient flpc = LocationServices.getFusedLocationProviderClient(getApplicationContext());
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+
+                    ActivityCompat.requestPermissions(this, perms, permsRequestCode);
+                } else {
+                    locationManager.getBestProvider(criteria,true);
+                    locationManager.requestLocationUpdates(1000, 1, criteria, this,null);
+
+                    if(locationManager != null) {
+                        location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                        if (location != null) {
+                            latitude = String.valueOf(location.getLatitude());
+                            longitude = String.valueOf(location.getLongitude());
+//                    Toast.makeText(Login_Activity.this,latitude,Toast.LENGTH_LONG).show();
+                            if (isMockLocationOn(location, this)) {
+                                showDialogEmulator("Anda terdeteksi menggunakan Fake GPS !");
+                            }
+
+
+                        } else {
+
+                            flpc.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                                @Override
+                                public void onSuccess(Location location) {
+                                    if(location != null)
+                                    {
+                                        latitude = String.valueOf(location.getLatitude());
+                                        longitude = String.valueOf(location.getLongitude());
+                                        if (isMockLocationOn(location, Menu_Utama_Activity.this)) {
+                                            showDialogEmulator("Anda terdeteksi menggunakan Fake GPS !");
+                                        }
+
+                                        //                        Toast.makeText(getApplicationContext(),location.toString(),Toast.LENGTH_SHORT).show();
+                                    }
+
+                                }
+                            });
+                        }
+
+                    }
+                }
+
+
+        if(isMockLocationEnabled())
+        {
+            showDialogEmulator("Fake GPS Detected");
+        }
+
+                //==============================================================================================================================
+
+
+                if(!isTimeAutomatic(this))
+                {
+                    showDialogEmulator("Dialarang Menggunakan Emulator ataupun Merubah Waktu !");
+//                    Toast.makeText(getApplicationContext(),"Time harus Auto",Toast.LENGTH_LONG).show();
+                }
+
+                if(!isTimeZoneAutomatic(this))
+                {
+                    showDialogEmulator("Dialarang Menggunakan Emulator ataupun Merubah Time Zone !");
+//                    Toast.makeText(getApplicationContext(),"Time harus Auto",Toast.LENGTH_LONG).show();
+                }
+
+
 //                createFolder();
 
-                getVersion();
+
 
 //                check_and_get_data(); //cek from database
 //                waktuServer();
@@ -204,12 +317,6 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
                     enableDisableButton(true);
                 }
 
-                //cek Time automatic
-                if(!isTimeAutomatic(Menu_Utama_Activity.this))
-                {
-                    showDialogCheckTime();
-//                    Toast.makeText(getApplicationContext(),"Time harus Auto",Toast.LENGTH_LONG).show();
-                }
 
 //                crudSqlite.hapus();
                 displayLocationSettingsRequest(this);
@@ -232,39 +339,55 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
 //                radius();
 
                 lnPresensiDatang.setOnClickListener(l -> {
-//                    get_locationPresence();
-                    presensi = "Datang";
-//                showDialogPhoto();
-                    if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
-                        Intent intent = new Intent(this, CameraActivity.class);
-                        intent.putExtra("presensi", presensi);
-                        intent.putExtra("camera", "depan");
-                        startActivity(intent);
-
-                    } else {
-                        Intent intent = new Intent(this, CameraActivity.class);
-                        intent.putExtra("presensi", presensi);
-                        startActivity(intent);
+                    if(isMockLocationEnabled())
+                    {
+                        showDialogEmulator("Fake GPS Detected");
                     }
+                    else
+                    {
+//                    get_locationPresence();
+                        presensi = "Datang";
+//                showDialogPhoto();
+                        if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
+                            Intent intent = new Intent(this, CameraActivity.class);
+                            intent.putExtra("presensi", presensi);
+                            intent.putExtra("camera", "depan");
+                            startActivity(intent);
+
+                        } else {
+                            Intent intent = new Intent(this, CameraActivity.class);
+                            intent.putExtra("presensi", presensi);
+                            startActivity(intent);
+                        }
+                    }
+
 
                 });
 
                 lnPresensiPulang.setOnClickListener(l -> {
+                    if(isMockLocationEnabled())
+                    {
+                        showDialogEmulator("Fake GPS Detected");
+                    }
+                    else
+                    {
 //                    get_locationPresence();
-                    presensi = "Pulang";
+                        presensi = "Pulang";
 //                showDialogPhoto();
 
-                    if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
-                        Intent intent = new Intent(this, CameraActivity.class);
-                        intent.putExtra("presensi", presensi);
-                        intent.putExtra("camera", "depan");
-                        startActivity(intent);
+                        if (sdk >= Build.VERSION_CODES.LOLLIPOP) {
+                            Intent intent = new Intent(this, CameraActivity.class);
+                            intent.putExtra("presensi", presensi);
+                            intent.putExtra("camera", "depan");
+                            startActivity(intent);
 
-                    } else {
-                        Intent intent = new Intent(this, CameraActivity.class);
-                        intent.putExtra("presensi", presensi);
-                        startActivity(intent);
+                        } else {
+                            Intent intent = new Intent(this, CameraActivity.class);
+                            intent.putExtra("presensi", presensi);
+                            startActivity(intent);
+                        }
                     }
+
 
                 });
 
@@ -350,7 +473,7 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
             {
                 snackbarDialog();
 //            crudSqlite.hapus();
-                    check_and_get_data();
+                check_and_get_data();
             }
             else
             {
@@ -394,6 +517,34 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
         }
     }
 
+    public static boolean isMockLocationOn(Location location, Context context) {
+        boolean isMock = false;
+        if (android.os.Build.VERSION.SDK_INT >= 18) {
+            isMock = location.isFromMockProvider();
+        } else {
+            isMock = !Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION).equals("0");
+        }
+        return isMock;
+    }
+
+
+    public boolean isMockLocationEnabled() {
+        boolean isMockLocation = false;
+        try {
+            //if marshmallow
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                AppOpsManager opsManager = (AppOpsManager) getApplicationContext().getSystemService(Context.APP_OPS_SERVICE);
+                isMockLocation = (opsManager.checkOp(AppOpsManager.OPSTR_MOCK_LOCATION, android.os.Process.myUid(), BuildConfig.APPLICATION_ID)== AppOpsManager.MODE_ALLOWED);
+            } else {
+                // in marshmallow this will always return true
+                isMockLocation = !android.provider.Settings.Secure.getString(getApplicationContext().getContentResolver(), "mock_location").equals("0");
+            }
+        } catch (Exception e) {
+            return isMockLocation;
+        }
+        return isMockLocation;
+    }
+
 
     private void cekEmulator(String boat,String host,String id)
     {
@@ -406,7 +557,7 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
                 {
                     if(response.body().getResponse() == 1 || isEmulator() == true)
                     {
-                        showDialogEmulator();
+                        showDialogEmulator("Terdeteksi Menggunakan Emulator !");
                     }
                 }
                 else
@@ -475,6 +626,33 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
         btn.setTextColor(Color.RED);
     }
     //===============================================
+
+
+    private void executeShellCommand(String su) {
+        Process process = null;
+        try {
+            process = Runtime.getRuntime().exec(su);
+            showDialogEmulator("Aplikasi tidak bisa digunakan di HP yang sudah di Root dan dilarang menggunakan Emulator !");
+//            Toast.makeText(Login_Activity.this, "It is rooted device", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+//            showDialogEmulator("No Rooted");
+        } finally {
+            if (process != null) {
+                try {
+                    process.destroy();
+                } catch (Exception e) { }
+            }
+        }
+    }
+
+
+    public static boolean isTimeZoneAutomatic(Context c) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            return Settings.Global.getInt(c.getContentResolver(), Settings.Global.AUTO_TIME_ZONE, 0) == 1;
+        } else {
+            return android.provider.Settings.System.getInt(c.getContentResolver(), Settings.System.AUTO_TIME_ZONE, 0) == 1;
+        }
+    }
 
     public static boolean isTimeAutomatic(Context c) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
@@ -545,12 +723,12 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
     }
 
 
-    private void showDialogEmulator(){
+    private void showDialogEmulator(String pesan){
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 
         // set pesan dari dialog
         alertDialogBuilder
-                .setMessage("Terdeteksi Menggunakan Emulator !")
+                .setMessage(pesan)
                 .setIcon(R.drawable.ic_warning)
                 .setCancelable(false)
                 .setPositiveButton("Keluar",new DialogInterface.OnClickListener() {
@@ -846,37 +1024,37 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
 
         // set pesan dari dialog
 
-                if(nip.equals(sharedPref.sp.getString("nip","")))
-                {
-                    alertDialogBuilder
-                            .setMessage("Masih ada "+ jml +" data presensi yang belum di kirim ke database server !. " +
-                                    "Mohon kirim data presensi anda dahulu. Nip : "+ nip)
-                            .setIcon(R.drawable.ic_pen)
-                            .setCancelable(false)
-                            .setPositiveButton("Ya",new DialogInterface.OnClickListener() {
-                            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
-                            public void onClick(DialogInterface dialog, int id) {
-                                startActivity(new Intent(Menu_Utama_Activity.this,List_Offline_PresenceActivity.class));
-                                finish();
-                            }
-                            });
-                }
-                else if(!nip.equals(sharedPref.sp.getString("nip","")))
-                {
-                    alertDialogBuilder
-                            .setMessage("Masih ada "+ jml +" data presensi orang lain yang belum di kirim ke database server !. " +
-                                    "Mohon kirim data presensi dengan Nip : "+ nip+" tersebut")
-                            .setIcon(R.drawable.ic_pen)
-                            .setCancelable(false)
-                            .setNegativeButton("Logout", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                showDialogLogOut();
-                                dialog.dismiss();
-                            }
-                            });
+        if(nip.equals(sharedPref.sp.getString("nip","")))
+        {
+            alertDialogBuilder
+                    .setMessage("Masih ada "+ jml +" data presensi yang belum di kirim ke database server !. " +
+                            "Mohon kirim data presensi anda dahulu. Nip : "+ nip)
+                    .setIcon(R.drawable.ic_pen)
+                    .setCancelable(false)
+                    .setPositiveButton("Ya",new DialogInterface.OnClickListener() {
+                        @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+                        public void onClick(DialogInterface dialog, int id) {
+                            startActivity(new Intent(Menu_Utama_Activity.this,List_Offline_PresenceActivity.class));
+                            finish();
+                        }
+                    });
+        }
+        else if(!nip.equals(sharedPref.sp.getString("nip","")))
+        {
+            alertDialogBuilder
+                    .setMessage("Masih ada "+ jml +" data presensi orang lain yang belum di kirim ke database server !. " +
+                            "Mohon kirim data presensi dengan Nip : "+ nip+" tersebut")
+                    .setIcon(R.drawable.ic_pen)
+                    .setCancelable(false)
+                    .setNegativeButton("Logout", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            showDialogLogOut();
+                            dialog.dismiss();
+                        }
+                    });
 
-                }
+        }
 
 
         // membuat alert dialog dari builder
@@ -1108,5 +1286,25 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
     @Override
     public void onBackPressed() {
         showDialogKeluar();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
     }
 }

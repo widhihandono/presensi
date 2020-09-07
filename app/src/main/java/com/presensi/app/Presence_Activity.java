@@ -2,6 +2,7 @@ package com.presensi.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AppOpsManager;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -21,12 +22,14 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.provider.Settings;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -98,7 +101,7 @@ import retrofit2.Response;
 public class Presence_Activity extends AppCompatActivity implements LocationListener {
     private ImageButton btnBack, btnRefresh;
     private TextView tvPresensi, tvWaktu, tvCoordinat, tvAkurasi;
-    private static final String SERVER_PATH = Api_Client.BASE_URL+"Api_presence/presensi";
+    private static final String SERVER_PATH = Api_Client.BASE_URL + "Api_presence/presensi";
 
     private FusedLocationProviderClient mFusedLocationClient;
     LocationRequest mLocationRequest;
@@ -181,8 +184,7 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
         }
 
         //cek lokasi yang belum di setting.
-        if(crudSqlite.getData().size() == 0)
-        {
+        if (crudSqlite.getData().size() == 0) {
             show_have_not_location("Maaf, anda belum bisa presensi. Gagal mendapatkan lokasi atau Lokasi anda belum di setting. " +
                     "Coba tekan tombol 'AMBIL SETTINGAN' di Menu Utama. Jika masih belum bisa silhakan hubungi Administrator");
         }
@@ -193,9 +195,15 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
         //Cek Imei Presensi
         cekImei_presence();
         //=====================
-        if(!isTimeAutomatic(Presence_Activity.this)) //check time auto or not.
+        if (!isTimeAutomatic(Presence_Activity.this)) //check time auto or not.
         {
             showDialogCheckTime();
+        }
+
+        if(!isTimeZoneAutomatic(this))
+        {
+            showDialogCheckTime();
+//                    Toast.makeText(getApplicationContext(),"Time harus Auto",Toast.LENGTH_LONG).show();
         }
 
         Criteria criteria = new Criteria();
@@ -218,10 +226,10 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
 
             ActivityCompat.requestPermissions(this, perms, permsRequestCode);
         } else {
-            locationManager.getBestProvider(criteria,true);
-            locationManager.requestLocationUpdates(1000, 1, criteria, this,null);
+            locationManager.getBestProvider(criteria, true);
+            locationManager.requestLocationUpdates(1000, 1, criteria, this, null);
 
-            if(locationManager != null) {
+            if (locationManager != null) {
                 location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
                 if (location != null) {
@@ -305,18 +313,25 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
             });
         });
 
-            start(this);
+        start(this);
         btnRefresh.setOnClickListener(l -> {
 
             createLocationRequest();
             snackbarDialogLocation();
 
 //            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000, 1, this);
-            locationManager.getBestProvider(criteria,true);
-            locationManager.requestLocationUpdates(1000, 1, criteria, this,null);
+            locationManager.getBestProvider(criteria, true);
+            locationManager.requestLocationUpdates(1000, 1, criteria, this, null);
 
-            if(locationManager != null) {
+            if (locationManager != null) {
                 location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                if(location != null)
+                {
+                    if(isMockLocationEnabled() || isMockLocationOn(location,Presence_Activity.this))
+                    {
+                        showDialogFakeGPS("Anda terdeteksi menggunakan Fake GPS !");
+                    }
+                }
             }
 
             getCurrentLocation();
@@ -344,20 +359,25 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
         tvPresensi.setOnClickListener(l -> {
 //            startActivity(new Intent(this,Location_Activity.class));
 //            finish();
-            if(!isTimeAutomatic(Presence_Activity.this)) //check time auto or not.
+            if (!isTimeAutomatic(Presence_Activity.this) || !isTimeZoneAutomatic(Presence_Activity.this)) //check time auto or not.
             {
                 showDialogCheckTime();
-            }
-            else
-            {
-                if (id_lokasi_presence == 0) {
-                    showSnackbar("Anda tidak mempunyai lokasi presensi, Hubungi Admin");
-                } else {
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inSampleSize = 2;
-                    bmpSelfie = BitmapFactory.decodeFile(currentPhotoPath, options);
-                    if (bmpSelfie != null) {
-                        encode = imageUtils.bitmapToBase64String(bmpSelfie, 17);
+            } else {
+                if(isMockLocationEnabled())
+                {
+                        showDialogFakeGPS("Anda terdeteksi menggunakan Fake GPS !");
+
+                }
+                else
+                {
+                    if (id_lokasi_presence == 0) {
+                        showSnackbar("Anda tidak mempunyai lokasi presensi, Hubungi Admin");
+                    } else {
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        options.inSampleSize = 2;
+                        bmpSelfie = BitmapFactory.decodeFile(currentPhotoPath, options);
+                        if (bmpSelfie != null) {
+                            encode = imageUtils.bitmapToBase64String(bmpSelfie, 17);
 
 //                    savePresence(sharedPref.sp.getString("nip", ""),
 //                            status, latitude, longitude, encode, sharedPref.sp.getString("id_unit_kerja", ""), String.valueOf(id_lokasi_presence), ket_presence);
@@ -365,21 +385,21 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
 //                                sharedPref.sp.getString("nip", ""),
 //                                status, latitude, longitude, encode, sharedPref.sp.getString("id_unit_kerja", ""), String.valueOf(id_lokasi_presence), ket_presence, getTime(), getDate());
 //                        uploadAsyncTask.execute();
-                    if(crudSqlite.InsertData_Presence(sharedPref.sp.getString("nip", ""),status, latitude, longitude, encode, sharedPref.sp.getString("id_unit_kerja", ""),
-                                id_lokasi_presence, ket_presence,getUniqueIMEIId(),getTime(),getDate()) != 0)
-                    {
-                        Toast.makeText(this, "Sukses presensi. Data tersimpan di Hp.", Toast.LENGTH_LONG).show();
-                        startActivity(new Intent(Presence_Activity.this,Menu_Utama_Activity.class));
-                        finish();
-                    }
-                    } else {
-                        Toast.makeText(this, "Foto masih kosong,Cek Foto", Toast.LENGTH_LONG).show();
-                    }
+                            if (crudSqlite.InsertData_Presence(sharedPref.sp.getString("nip", ""), status, latitude, longitude, encode, sharedPref.sp.getString("id_unit_kerja", ""),
+                                    id_lokasi_presence, ket_presence, getUniqueIMEIId(), getTime(), getDate()) != 0) {
+                                Toast.makeText(this, "Sukses presensi. Data tersimpan di Hp.", Toast.LENGTH_LONG).show();
+                                startActivity(new Intent(Presence_Activity.this, Menu_Utama_Activity.class));
+                                finish();
+                            }
+                        } else {
+                            Toast.makeText(this, "Foto masih kosong,Cek Foto", Toast.LENGTH_LONG).show();
+                        }
 
+                    }
                 }
+
             }
         });
-
 
 
 //        grabImage(imgPhoto);
@@ -391,6 +411,15 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
     }
 
     //================check time hp auto or not.====================================
+
+    public static boolean isTimeZoneAutomatic(Context c) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            return Settings.Global.getInt(c.getContentResolver(), Settings.Global.AUTO_TIME_ZONE, 0) == 1;
+        } else {
+            return android.provider.Settings.System.getInt(c.getContentResolver(), Settings.System.AUTO_TIME_ZONE, 0) == 1;
+        }
+    }
+
     public static boolean isTimeAutomatic(Context c) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             return Settings.Global.getInt(c.getContentResolver(), Settings.Global.AUTO_TIME, 0) == 1;
@@ -399,15 +428,15 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
         }
     }
 
-    private void showDialogCheckTime(){
+    private void showDialogCheckTime() {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 
         // set pesan dari dialog
         alertDialogBuilder
-                .setMessage("Dilarang merubah jam pada handphone")
+                .setMessage("Dilarang merubah Jam")
                 .setIcon(R.drawable.ic_pen)
                 .setCancelable(false)
-                .setPositiveButton("Keluar",new DialogInterface.OnClickListener() {
+                .setPositiveButton("Keluar", new DialogInterface.OnClickListener() {
                     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
                     public void onClick(DialogInterface dialog, int id) {
                         finishAffinity();
@@ -426,27 +455,43 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
 //=====================================================================================================
 
 
-    private String getTime()
-    {
+    private String getTime() {
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
         Date date = new Date();
         return sdf.format(date);
     }
 
-    private String getDate()
-    {
+    private String getDate() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date date = new Date();
         return sdf.format(date);
     }
 
-    private void getCurrentLocation()
-    {
+    private void getCurrentLocation() {
         FusedLocationProviderClient flpc = LocationServices.getFusedLocationProviderClient(getApplicationContext());
 
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         flpc.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
+                if(location != null)
+                {
+                    if(isMockLocationEnabled() || isMockLocationOn(location,Presence_Activity.this))
+                    {
+                        showDialogFakeGPS("Anda terdeteksi menggunakan Fake GPS !");
+                    }
+                }
+
+
                 latitude = String.valueOf(location.getLatitude());
                 longitude = String.valueOf(location.getLongitude());
 
@@ -487,6 +532,7 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
             }
         });
     }
+
     private void drawMarkerWithCircle(LatLng position, float akurasi, String lat) {
         int strokeColor = 0xED4D8015; //green outline
         int shadeColor = 0x5184E911; //opaque green fill
@@ -578,7 +624,7 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
             toast.show();
         } else {
             snackbarDialog();
-            Call<Ent_Presensi> callPresensi = api_interface.presensi(nip, status, lat, longit, getUniqueIMEIId(), image, id_unit_kerja, id_lokasi_presence, ket_presence,getTime(),getDate());
+            Call<Ent_Presensi> callPresensi = api_interface.presensi(nip, status, lat, longit, getUniqueIMEIId(), image, id_unit_kerja, id_lokasi_presence, ket_presence, getTime(), getDate());
 
             callPresensi.enqueue(new Callback<Ent_Presensi>() {
                 @Override
@@ -685,109 +731,6 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
 
     @Override
     public void onLocationChanged(Location location) {
-//        if(isMockLocationOn(location, getApplicationContext()))
-//        {
-//            Toast.makeText(getApplicationContext(), "Fake location detected !", Toast.LENGTH_LONG).show();
-//            tvPresensi.setEnabled(false);
-//        }else {
-//
-////            Toast.makeText(getApplicationContext(), String.valueOf(location.getLatitude())+" + "+String.valueOf(location.getLongitude()), Toast.LENGTH_LONG).show();
-//            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-//
-////            tvAkurasi.setText("( Akurasi : " + Math.round(location.getAccuracy()) + " meter )");
-//
-//            if (markers.containsKey("1") && circles.containsKey("1")) {
-//                Circle crc = circles.get("1");
-//                Marker mark = markers.get("1");
-//                crc.remove();
-//                mark.remove();
-//            }
-//
-//            drawMarkerWithCircle(latLng, sharedPref.sp.getInt("radius", 0), latitude);
-//
-////            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude, latLng.longitude), 19));
-//
-//            LatLngBounds.Builder builder = builder = new LatLngBounds.Builder();
-//            for (int a = 0; a < crudSqlite.getData().size(); a++) {
-//
-//                builder.include(new LatLng(Double.parseDouble(crudSqlite.getData().get(a).getLatitude()),Double.parseDouble(crudSqlite.getData().get(a).getLongitude())));
-//
-//            }
-//            builder.include(new LatLng(location.getLatitude(),location.getLongitude()));
-//            LatLngBounds bounds = builder.build();
-//
-//            int width = getResources().getDisplayMetrics().widthPixels;
-//            int height = lnMaps.getHeight();
-//            int padding = (int) (width * 0.10); // offset from edges of the map 10% of screen
-//            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width,height,padding);
-//
-//            googleMap.animateCamera(cu);
-//
-//            for (int a = 0; a < crudSqlite.getData().size(); a++) {
-//                float jarak = getDistanceLocation(latLng.latitude, latLng.longitude,
-//                        Double.parseDouble(crudSqlite.getData().get(a).getLatitude()),
-//                        Double.parseDouble(crudSqlite.getData().get(a).getLongitude()));
-//
-//
-//                if (jarak <= sharedPref.sp.getInt("radius", 0)) {
-//                    locationManager.removeUpdates(this);
-//                    //Stop Snackbar
-//                    bar.dismiss();
-//                    tvPresensi.setEnabled(true);
-//
-//                    lat_presensi = Double.parseDouble(crudSqlite.getData().get(a).getLatitude());
-//                    lon_presensi = Double.parseDouble(crudSqlite.getData().get(a).getLongitude());
-//                    id_lokasi_presence = crudSqlite.getData().get(a).getId_lokasi_presence();
-////                    Toast.makeText(getApplicationContext(),   "Id lokasi Presensi" + String.valueOf(id_lokasi_presence), Toast.LENGTH_SHORT).show();
-//
-//                    tvCoordinat.setText("{" + String.valueOf(latLng.latitude) + "," + String.valueOf(latLng.longitude) + "}");
-//                    latitude = String.valueOf(latLng.latitude);
-//                    longitude = String.valueOf(latLng.longitude);
-//
-//                    //Auto Out after 5 minute
-//                    Thread thread = new Thread()
-//                    {
-//                        @Override
-//                        public void run() {
-//                            try {
-//                                sleep(300000);
-//
-//                            } catch (InterruptedException e) {
-//                                e.printStackTrace();
-//                            }
-//                            finally {
-//                                    startActivity(new Intent(Presence_Activity.this,Menu_Utama_Activity.class));
-//                                    finish();
-//
-//                            }
-//                        }
-//                    };
-//                    thread.start();
-//
-//
-//                }
-//                //show radius
-////                tvAkurasi.setText("( Radius : "+jarak+" meter )");
-//
-//
-////                    Toast.makeText(getApplicationContext(), jarak + "," + String.valueOf(mCircle.getRadius()), Toast.LENGTH_SHORT).show();
-//
-//
-//                googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-//                    @Override
-//                    public boolean onMarkerClick(Marker marker) {
-//                        if (marker.equals(mMarker)) {
-//                            showImageDialog();
-//                        }
-//                        return false;
-//                    }
-//                });
-//
-//            }
-//
-//
-////            getLocation();
-//        }
 
 
     }
@@ -803,7 +746,7 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
                     public void onClick(DialogInterface dialog, int id) {
-                        startActivity(new Intent(Presence_Activity.this,Menu_Utama_Activity.class));
+                        startActivity(new Intent(Presence_Activity.this, Menu_Utama_Activity.class));
                         finish();
 
                     }
@@ -847,18 +790,33 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
         btn.setTextColor(Color.RED);
     }
 
+
     public static boolean isMockLocationOn(Location location, Context context) {
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            return location.isFromMockProvider();
+        boolean isMock = false;
+        if (android.os.Build.VERSION.SDK_INT >= 18) {
+            isMock = location.isFromMockProvider();
         } else {
-            String mockLocation = "0";
-            try {
-                mockLocation = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return !mockLocation.equals("0");
+            isMock = !Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION).equals("0");
         }
+        return isMock;
+    }
+
+
+    public boolean isMockLocationEnabled() {
+        boolean isMockLocation = false;
+        try {
+            //if marshmallow
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                AppOpsManager opsManager = (AppOpsManager) getApplicationContext().getSystemService(Context.APP_OPS_SERVICE);
+                isMockLocation = (opsManager.checkOp(AppOpsManager.OPSTR_MOCK_LOCATION, android.os.Process.myUid(), BuildConfig.APPLICATION_ID)== AppOpsManager.MODE_ALLOWED);
+            } else {
+                // in marshmallow this will always return true
+                isMockLocation = !android.provider.Settings.Secure.getString(getApplicationContext().getContentResolver(), "mock_location").equals("0");
+            }
+        } catch (Exception e) {
+            return isMockLocation;
+        }
+        return isMockLocation;
     }
 
     @Override
@@ -875,6 +833,7 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
     public void onProviderDisabled(String provider) {
 
     }
+
 
     private void snackbarDialog() {
         tvPresensi.setEnabled(false);
@@ -1028,146 +987,144 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
     //Upload use percentage
 
 
-         private class UploadAsyncTas extends AsyncTask<Void, Integer, Integer> {
+    private class UploadAsyncTas extends AsyncTask<Void, Integer, Integer> {
 
-            HttpClient httpClient = new DefaultHttpClient();
-            private Context context;
-            private Exception exception;
-            private ProgressDialog progressDialog = null;
-            String keterangan = "";
-             String nip,status,lat,longit,image,id_unit_kerja,id_lokasi_presence,ket_presence,time,date;
+        HttpClient httpClient = new DefaultHttpClient();
+        private Context context;
+        private Exception exception;
+        private ProgressDialog progressDialog = null;
+        String keterangan = "";
+        String nip, status, lat, longit, image, id_unit_kerja, id_lokasi_presence, ket_presence, time, date;
 
-            private UploadAsyncTas(Context context,String nip, String status, String lat, String longit, String image,
-                                   String id_unit_kerja, String id_lokasi_presence, String ket_presence,String time,String date) {
-                this.context = context;
-                this.nip = nip;
-                this.status = status;
-                this.lat = lat;
-                this.longit = longit;
-                this.image = image;
-                this.id_unit_kerja = id_unit_kerja;
-                this.id_lokasi_presence = id_lokasi_presence;
-                this.ket_presence = ket_presence;
-                this.time = time;
-                this.date = date;
-            }
+        private UploadAsyncTas(Context context, String nip, String status, String lat, String longit, String image,
+                               String id_unit_kerja, String id_lokasi_presence, String ket_presence, String time, String date) {
+            this.context = context;
+            this.nip = nip;
+            this.status = status;
+            this.lat = lat;
+            this.longit = longit;
+            this.image = image;
+            this.id_unit_kerja = id_unit_kerja;
+            this.id_lokasi_presence = id_lokasi_presence;
+            this.ket_presence = ket_presence;
+            this.time = time;
+            this.date = date;
+        }
 
-            @Override
-            protected Integer doInBackground(Void... params) {
+        @Override
+        protected Integer doInBackground(Void... params) {
 
-                HttpResponse httpResponse = null;
-                HttpEntity httpEntity = null;
-                Integer responseString = 0;
-
-
-                try {
-                    HttpPost httpPost = new HttpPost(SERVER_PATH);
-                    MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
-
-                    // Add the file to be uploaded
-                    multipartEntityBuilder.addTextBody("nip", nip);
-                    multipartEntityBuilder.addTextBody("status", status);
-                    multipartEntityBuilder.addTextBody("latitude", lat);
-                    multipartEntityBuilder.addTextBody("longitude", longit);
-                    multipartEntityBuilder.addTextBody("image", image);
-                    multipartEntityBuilder.addTextBody("id_unit_kerja", id_unit_kerja);
-                    multipartEntityBuilder.addTextBody("id_lokasi_presence", id_lokasi_presence);
-                    multipartEntityBuilder.addTextBody("imei",getUniqueIMEIId());
-                    multipartEntityBuilder.addTextBody("ket_presence",ket_presence);
-                    multipartEntityBuilder.addTextBody("time",getTime());
-                    multipartEntityBuilder.addTextBody("date",getDate());
-
-                    // Progress listener - updates task's progress
-                    MyHttpEntity.ProgressListener progressListener =
-                            new MyHttpEntity.ProgressListener() {
-                                @Override
-                                public void transferred(float progress) {
-                                    publishProgress((int) progress);
-                                }
-                            };
-
-                    // POST
-                    httpPost.setEntity(new MyHttpEntity(multipartEntityBuilder.build(),
-                            progressListener));
+            HttpResponse httpResponse = null;
+            HttpEntity httpEntity = null;
+            Integer responseString = 0;
 
 
-                    httpResponse = httpClient.execute(httpPost);
-                    httpEntity = httpResponse.getEntity();
+            try {
+                HttpPost httpPost = new HttpPost(SERVER_PATH);
+                MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
 
-                    int statusCode = httpResponse.getStatusLine().getStatusCode();
+                // Add the file to be uploaded
+                multipartEntityBuilder.addTextBody("nip", nip);
+                multipartEntityBuilder.addTextBody("status", status);
+                multipartEntityBuilder.addTextBody("latitude", lat);
+                multipartEntityBuilder.addTextBody("longitude", longit);
+                multipartEntityBuilder.addTextBody("image", image);
+                multipartEntityBuilder.addTextBody("id_unit_kerja", id_unit_kerja);
+                multipartEntityBuilder.addTextBody("id_lokasi_presence", id_lokasi_presence);
+                multipartEntityBuilder.addTextBody("imei", getUniqueIMEIId());
+                multipartEntityBuilder.addTextBody("ket_presence", ket_presence);
+                multipartEntityBuilder.addTextBody("time", getTime());
+                multipartEntityBuilder.addTextBody("date", getDate());
 
-                    if (statusCode == 200) {
-                        // Server response
-                        //cek respone
+                // Progress listener - updates task's progress
+                MyHttpEntity.ProgressListener progressListener =
+                        new MyHttpEntity.ProgressListener() {
+                            @Override
+                            public void transferred(float progress) {
+                                publishProgress((int) progress);
+                            }
+                        };
 
-                        JSONObject myObject = new JSONObject(EntityUtils.toString(httpEntity));
+                // POST
+                httpPost.setEntity(new MyHttpEntity(multipartEntityBuilder.build(),
+                        progressListener));
+
+
+                httpResponse = httpClient.execute(httpPost);
+                httpEntity = httpResponse.getEntity();
+
+                int statusCode = httpResponse.getStatusLine().getStatusCode();
+
+                if (statusCode == 200) {
+                    // Server response
+                    //cek respone
+
+                    JSONObject myObject = new JSONObject(EntityUtils.toString(httpEntity));
 //                        Log.i("BERHASIL CUY", String.valueOf(myObject.getInt("status")));
-                        responseString = myObject.getInt("response");
-                        keterangan = "Sukses Presensi. Imei : " + myObject.getString("imei")
-                                + " sudah digunakan oleh NIP : " + myObject.getString("nip") +
-                                ", Nama : " + myObject.getString("nama") + ", Ini akan dicatat di sistem";
-                    } else {
-                        responseString = 0;
-                    }
-                } catch (UnsupportedEncodingException | ClientProtocolException e) {
+                    responseString = myObject.getInt("response");
+                    keterangan = "Sukses Presensi. Imei : " + myObject.getString("imei")
+                            + " sudah digunakan oleh NIP : " + myObject.getString("nip") +
+                            ", Nama : " + myObject.getString("nama") + ", Ini akan dicatat di sistem";
+                } else {
+                    responseString = 0;
+                }
+            } catch (UnsupportedEncodingException | ClientProtocolException e) {
 //                    e.printStackTrace();
 //                    Log.e("SAVE", e.getMessage());
 //                    this.exception = e;
-                } catch (IOException e) {
+            } catch (IOException e) {
 //                    e.printStackTrace();
-                } catch (JSONException e) {
+            } catch (JSONException e) {
 //                    e.printStackTrace();
-                }
-
-                return responseString;
             }
 
-            @Override
-            protected void onPreExecute() {
+            return responseString;
+        }
 
-                // Init and show dialog
-                this.progressDialog = new ProgressDialog(this.context);
-                if(this.progressDialog != null)
-                {
-                    this.progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                    this.progressDialog.setCancelable(false);
-                    this.progressDialog.show();
-                }
+        @Override
+        protected void onPreExecute() {
 
+            // Init and show dialog
+            this.progressDialog = new ProgressDialog(this.context);
+            if (this.progressDialog != null) {
+                this.progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                this.progressDialog.setCancelable(false);
+                this.progressDialog.show();
             }
 
-            @Override
-            protected void onPostExecute(Integer result) {
+        }
 
-                // Close dialog
-                if (result == 1) {
-                    this.progressDialog.dismiss();
+        @Override
+        protected void onPostExecute(Integer result) {
+
+            // Close dialog
+            if (result == 1) {
+                this.progressDialog.dismiss();
 //                    Toast.makeText(getApplicationContext(), keterangan, Toast.LENGTH_LONG).show();
-                    Toast.makeText(getApplicationContext(),
-                            "Success", Toast.LENGTH_LONG).show();
-                    startActivity(new Intent(Presence_Activity.this,Menu_Utama_Activity.class));
-                    finish();
-                }
-                else if (result == 2) {
-                    this.progressDialog.dismiss();
-                    tvPresensi.setEnabled(true);
-                    showSnackbar("Anda diluar Jangkauan, tidak bisa presensi");
-                } else {
-                    this.progressDialog.dismiss();
-                    tvPresensi.setEnabled(true);
-                    showSnackbar("Gagal Presensi, Coba lagi. Atau cek koneksi");
-                }
-
+                Toast.makeText(getApplicationContext(),
+                        "Success", Toast.LENGTH_LONG).show();
+                startActivity(new Intent(Presence_Activity.this, Menu_Utama_Activity.class));
+                finish();
+            } else if (result == 2) {
+                this.progressDialog.dismiss();
+                tvPresensi.setEnabled(true);
+                showSnackbar("Anda diluar Jangkauan, tidak bisa presensi");
+            } else {
+                this.progressDialog.dismiss();
+                tvPresensi.setEnabled(true);
+                showSnackbar("Gagal Presensi, Coba lagi. Atau cek koneksi");
             }
 
-            @Override
-            protected void onProgressUpdate(Integer... progress) {
-                // Update process
-                this.progressDialog.setProgress((int) progress[0]-2);
+        }
 
-            }
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            // Update process
+            this.progressDialog.setProgress((int) progress[0] - 2);
 
-         }
+        }
+
+    }
 
     public void start(Context ctx) {
         client = LocationServices
@@ -1180,6 +1137,16 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
             client.removeLocationUpdates(locCallback);
         }
         locCallback = createNewLocationCallback();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         client.requestLocationUpdates(request, locCallback, null);
     }
 
