@@ -903,8 +903,20 @@ public class Presence_Activity extends AppCompatActivity implements LocationList
             // for ActivityCompat#requestPermissions for more details.
             ActivityCompat.requestPermissions(this, perms, permsRequestCode);
         }
-        String imei = telephonyManager.getDeviceId();
-        String android_id = Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
+        String imei="";
+        String android_id="";
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            android_id = Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
+        }
+        else
+        {
+            if (telephonyManager.getDeviceId() != null) {
+                imei = telephonyManager.getDeviceId();
+            } else {
+                android_id = Settings.Secure.getString(this.getContentResolver(), Settings.Secure.ANDROID_ID);
+            }
+        }
 
         Log.e("imei", "=" + imei);
         Log.e("android_id", "=" + android_id);

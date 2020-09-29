@@ -160,7 +160,7 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
         tvPresensiOffline = findViewById(R.id.tvPresensiOffline);
         tvHelp = findViewById(R.id.tvHelp);
 
-        tvVersion.setText("Version 3.3");
+        tvVersion.setText("Version 3.4");
         fab = (FloatingActionButton)findViewById(R.id.fab);
         fab_add_unit_kerja = (FloatingActionButton)findViewById(R.id.fab_add_unit_kerja);
         fab_list = (FloatingActionButton)findViewById(R.id.fab_list);
@@ -288,13 +288,13 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
 
                 if(!isTimeAutomatic(this))
                 {
-                    showDialogEmulator("Dialarang Menggunakan Emulator ataupun Merubah Waktu !");
+                    showDialogEmulator("Dilarang Menggunakan Emulator ataupun Merubah Waktu !");
 //                    Toast.makeText(getApplicationContext(),"Time harus Auto",Toast.LENGTH_LONG).show();
                 }
 
                 if(!isTimeZoneAutomatic(this))
                 {
-                    showDialogEmulator("Dialarang Menggunakan Emulator ataupun Merubah Time Zone !");
+                    showDialogEmulator("Dilarang Menggunakan Emulator ataupun Merubah Time Zone !");
 //                    Toast.makeText(getApplicationContext(),"Time harus Auto",Toast.LENGTH_LONG).show();
                 }
 
