@@ -22,6 +22,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.blogspot.atifsoftwares.animatoolib.Animatoo;
 import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
 import com.presensi.app.Api.Api_Client;
@@ -479,6 +480,7 @@ Transition transition;
     @Override
     public void onBackPressed() {
         startActivity(new Intent(Profile_Activity.this,Menu_Utama_Activity.class));
+        Animatoo.animateFade(Profile_Activity.this);
         finish();
     }
 }

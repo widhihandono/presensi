@@ -48,6 +48,7 @@ import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.blogspot.atifsoftwares.animatoolib.Animatoo;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -160,7 +161,7 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
         tvPresensiOffline = findViewById(R.id.tvPresensiOffline);
         tvHelp = findViewById(R.id.tvHelp);
 
-        tvVersion.setText("Version 3.4");
+        tvVersion.setText("Version 3.5");
         fab = (FloatingActionButton)findViewById(R.id.fab);
         fab_add_unit_kerja = (FloatingActionButton)findViewById(R.id.fab_add_unit_kerja);
         fab_list = (FloatingActionButton)findViewById(R.id.fab_list);
@@ -701,6 +702,7 @@ public class Menu_Utama_Activity extends AppCompatActivity implements AppCompatC
 
                         bar.dismiss();
                         startActivity(new Intent(Menu_Utama_Activity.this, Menu_Utama_Activity.class));
+                        Animatoo.animateFade(Menu_Utama_Activity.this);
                         finish();
 
                     } else if (response.body().getResponse() == 2) {

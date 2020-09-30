@@ -1,7 +1,10 @@
 package com.presensi.app;
 
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,7 +21,21 @@ import com.google.android.material.snackbar.Snackbar;
 import com.presensi.app.Api.Api_Client;
 import com.presensi.app.Api.Api_Interface;
 import com.presensi.app.Model.Ent_pegawai;
+import com.presensi.app.Util.MyHttpEntity;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Random;
 
 import retrofit2.Call;
@@ -59,8 +76,11 @@ private Api_Interface api_interface;
             else
             {
                 showDialog_loading();
-                sendToEmailAndSms(String.valueOf(10000+random.nextInt(99999)),etNoHp.getText().toString(),
+                UploadAsyncTask upload = new UploadAsyncTask(Reset_password_Activity.this,String.valueOf(10000+random.nextInt(99999)),etNoHp.getText().toString(),
                         etEmail.getText().toString(),etNip.getText().toString());
+                upload.execute();
+//                sendToEmailAndSms(String.valueOf(10000+random.nextInt(99999)),etNoHp.getText().toString(),
+//                        etEmail.getText().toString(),etNip.getText().toString());
             }
 
         });
@@ -99,6 +119,150 @@ private Api_Interface api_interface;
         bar.setActionTextColor(Color.GRAY);
         bar.show();
     }
+
+    private class  UploadAsyncTask extends AsyncTask<Void, Integer, Integer> {
+
+        HttpClient httpClient = new DefaultHttpClient();
+        private Context context;
+        private Exception exception;
+        private ProgressDialog progressDialog = null;
+        String keterangan = "";
+        String password,no_hp,email,nip;
+
+        private UploadAsyncTask(Context context,String password,String no_hp,String email,String nip) {
+            this.context = context;
+            this.nip = nip;
+            this.password = password;
+            this.no_hp = no_hp;
+            this.email = email;
+        }
+
+        @Override
+        protected Integer doInBackground(Void... params) {
+
+            HttpResponse httpResponse = null;
+            HttpEntity httpEntity = null;
+            Integer responseString = 0;
+
+
+            try {
+                HttpPost httpPost = new HttpPost(Api_Client.BASE_URL+"Api_presence/sendEmailAndSms");
+                MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
+
+                // Add the file to be uploaded
+                multipartEntityBuilder.addTextBody("nip", nip);
+                multipartEntityBuilder.addTextBody("password", password);
+                multipartEntityBuilder.addTextBody("no_hp", no_hp);
+                multipartEntityBuilder.addTextBody("email", email);
+
+                // Progress listener - updates task's progress
+                MyHttpEntity.ProgressListener progressListener =
+                        new MyHttpEntity.ProgressListener() {
+                            @Override
+                            public void transferred(float progress) {
+                                publishProgress((int) progress);
+                            }
+                        };
+
+                // POST
+                httpPost.setEntity(new MyHttpEntity(multipartEntityBuilder.build(),
+                        progressListener));
+
+
+                httpResponse = httpClient.execute(httpPost);
+                httpEntity = httpResponse.getEntity();
+
+                int statusCode = httpResponse.getStatusLine().getStatusCode();
+
+                if (statusCode == 200) {
+                    // Server response
+                    //cek respone
+
+                    JSONObject myObject = new JSONObject(EntityUtils.toString(httpEntity));
+//                        Log.i("BERHASIL CUY", String.valueOf(myObject.getInt("status")));
+                    responseString = myObject.getInt("response");
+                    keterangan = myObject.getString("pesan");
+                } else {
+                    responseString = 0;
+                }
+            } catch (UnsupportedEncodingException | ClientProtocolException e) {
+//                    e.printStackTrace();
+//                    Log.e("SAVE", e.getMessage());
+//                    this.exception = e;
+            } catch (IOException e) {
+//                    e.printStackTrace();
+            } catch (JSONException e) {
+//                    e.printStackTrace();
+            }
+
+            return responseString;
+        }
+
+        @Override
+        protected void onPreExecute() {
+
+            // Init and show dialog
+            this.progressDialog = new ProgressDialog(this.context);
+            if(this.progressDialog == null)
+            {
+                this.progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                this.progressDialog.setCancelable(false);
+                this.progressDialog.show();
+            }
+
+        }
+
+        @Override
+        protected void onPostExecute(Integer result) {
+
+            // Close dialog
+            if (result == 1) {
+                this.progressDialog.dismiss();
+                dialog.dismiss();
+//                    Toast.makeText(context, keterangan, Toast.LENGTH_LONG).show();
+                Toast.makeText(context,
+                        "Success", Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(getApplicationContext(), Login_Activity.class);
+                startActivity(intent);
+                finish();
+//                showSnackbar_noRefresh(keterangan);
+            }
+            else if (result == 2)
+            {
+                this.progressDialog.dismiss();
+                dialog.dismiss();
+                showSnackbar_noRefresh(keterangan);
+            }
+            else if(result == 3)
+            {
+                this.progressDialog.dismiss();
+                dialog.dismiss();
+                showSnackbar_noRefresh(keterangan);
+            }
+            else if(result == 4)
+            {
+                this.progressDialog.dismiss();
+                dialog.dismiss();
+                showSnackbar_noRefresh(keterangan);
+            }
+            else
+            {
+                this.progressDialog.dismiss();
+                dialog.dismiss();
+                showSnackbar_noRefresh("Masalah dengan Koneksi");
+            }
+
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            // Update process
+            this.progressDialog.setProgress((int) progress[0]-2);
+
+        }
+
+    }
+
 
     private void sendToEmailAndSms(String password,String no_hp,String email,String nip)
     {
