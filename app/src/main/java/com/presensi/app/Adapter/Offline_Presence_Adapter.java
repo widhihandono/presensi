@@ -1,7 +1,7 @@
 package com.presensi.app.Adapter;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -19,8 +19,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,7 +58,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class Offline_Presence_Adapter extends RecyclerView.Adapter<Offline_Presence_Adapter.Holder> {
-    private Context context;
+    public Context context;
     private List<Ent_Presensi> list_presensi;
     SharedPref sharedPref;
     private static final String SERVER_PATH = Api_Client.BASE_URL+"Api_presence/presence";
@@ -91,8 +94,14 @@ public class Offline_Presence_Adapter extends RecyclerView.Adapter<Offline_Prese
          holder.tvTanggal.setText("  "+list_presensi.get(i).getDate());
 
          holder.imgUpload.setOnClickListener(l->{
-             cekEmulator(bootloader,host,id,i);
-
+//             cekEmulator(bootloader,host,id,i);
+             UploadAsyncTas uploadAsyncTask = new UploadAsyncTas(context,list_presensi.get(i).getId(),
+                     sharedPref.sp.getString("nip", ""),
+                     list_presensi.get(i).getStatus(), list_presensi.get(i).getLatitude(),
+                     list_presensi.get(i).getLongitude(), list_presensi.get(i).getImage(), list_presensi.get(i).getId_unit_kerja(),
+                     String.valueOf(list_presensi.get(i).getId_lokasi_presence()), list_presensi.get(i).getKet_presence(),list_presensi.get(i).getImei(),
+                     list_presensi.get(i).getTime(),list_presensi.get(i).getDate());
+             uploadAsyncTask.execute();
          });
 
 
@@ -244,12 +253,17 @@ public class Offline_Presence_Adapter extends RecyclerView.Adapter<Offline_Prese
         }
     }
 
-    private class  UploadAsyncTas extends AsyncTask<Void, Integer, Integer> {
 
+
+
+    private class  UploadAsyncTas extends AsyncTask<Void, Integer, Integer> {
+        public Context context;
         HttpClient httpClient = new DefaultHttpClient();
-        private Context context;
         private Exception exception;
-        private ProgressDialog progressDialog = null;
+        Dialog dialog = null;
+        ProgressBar text = null;
+        TextView text2 = null,tvClose=null;
+
         String keterangan = "";
         String nip,status,lat,longit,image,id_unit_kerja,id_lokasi_presence,ket_presence,time,date,imei,id;
 
@@ -301,6 +315,11 @@ public class Offline_Presence_Adapter extends RecyclerView.Adapter<Offline_Prese
                             @Override
                             public void transferred(float progress) {
                                 publishProgress((int) progress);
+                                text.setProgress((int) progress);
+                                if(progress == 100)
+                                {
+                                    dialog.dismiss();
+                                }
                             }
                         };
 
@@ -344,14 +363,25 @@ public class Offline_Presence_Adapter extends RecyclerView.Adapter<Offline_Prese
         protected void onPreExecute() {
 
             // Init and show dialog
-            this.progressDialog = new ProgressDialog(this.context);
-            if(this.progressDialog == null)
-            {
-                this.progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                this.progressDialog.setCancelable(false);
-                this.progressDialog.show();
-            }
+            dialog = new Dialog(context);
+            text = new ProgressBar(context);
+            text2 = new TextView(context);
 
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            dialog.setCancelable(false);
+            dialog.setContentView(R.layout.dialog);
+            text = (ProgressBar) dialog.findViewById(R.id.progress_horizontal);
+            text2 = dialog.findViewById(R.id.tvNilai);
+            tvClose = dialog.findViewById(R.id.tvClose);
+
+            tvClose.setOnClickListener(l->{
+                dialog.dismiss();
+            });
+
+            dialog.show();
+
+            Window window = dialog.getWindow();
+            window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
         }
 
         @Override
@@ -359,7 +389,7 @@ public class Offline_Presence_Adapter extends RecyclerView.Adapter<Offline_Prese
 
             // Close dialog
             if (result == 1) {
-                this.progressDialog.dismiss();
+                dialog.dismiss();
 //                    Toast.makeText(context, keterangan, Toast.LENGTH_LONG).show();
                 Toast.makeText(context,
                         "Success", Toast.LENGTH_LONG).show();
@@ -372,11 +402,11 @@ public class Offline_Presence_Adapter extends RecyclerView.Adapter<Offline_Prese
             else if (result == 2) {
                 Toast.makeText(context,
                         ""+result, Toast.LENGTH_LONG).show();
-                this.progressDialog.dismiss();
+                dialog.dismiss();
             } else {
                 Toast.makeText(context,
                         ""+result, Toast.LENGTH_LONG).show();
-                this.progressDialog.dismiss();
+                dialog.dismiss();
             }
 
         }
@@ -384,7 +414,8 @@ public class Offline_Presence_Adapter extends RecyclerView.Adapter<Offline_Prese
         @Override
         protected void onProgressUpdate(Integer... progress) {
             // Update process
-            this.progressDialog.setProgress((int) progress[0]-2);
+
+            text2.setText(String.valueOf(progress[0]-2));
 
         }
 

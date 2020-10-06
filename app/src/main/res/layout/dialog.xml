@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:orientation="vertical">
+
+    <ProgressBar
+        android:id="@+id/progress_horizontal"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp" />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:paddingLeft="20dp"
+        android:layout_margin="16dp"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvNilai"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/tvNilai"
+            android:text="%" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:text="Close"
+            android:textColor="#FF2616"
+            android:id="@+id/tvClose"
+            android:textSize="16dp"
+            android:layout_marginRight="5dp"/>
+    </RelativeLayout>
+</LinearLayout>
